@@ -7,7 +7,9 @@
   height: 100vh;
   justify-content: space-between;
 }
-
+.marginIcon{
+  margin:2px;
+}
 .Main {
   display: flex;
   flex-direction: column;
