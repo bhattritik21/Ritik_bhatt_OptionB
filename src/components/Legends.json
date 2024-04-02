@@ -1,0 +1,24 @@
+
+[
+    {
+      "id": 1,
+      "text": "Scans",
+      "color": "rgb(155 235 180)"
+    },
+    {
+        "id": 2,
+        "text": "Exits",
+        "color": "rgb(244 171 170)"
+      },
+      {
+        "id": 3,
+        "text": "Discrepancies",
+        "color": "gray"
+      },
+      {
+        "id": 4,
+        "text": "Net Change",
+        "color": "rgb(190 220 253)"
+      }
+  ]
+  
