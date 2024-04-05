@@ -1,8 +1,10 @@
-import React from 'react'
+
 import data from './data.json'
 import legend from './Legends.json'
+import Form from 'react-bootstrap/Form';
 
-const Side = () => {
+const Side = ({jsonData,setjsonData}:any) => {
+  
   return (
     <div className='Side'>
       <h1 className='heading1' style={{marginBottom:'10px'}}>Net Change</h1>
@@ -24,6 +26,13 @@ const Side = () => {
           </div></div>
         )
       })}
+      <Form.Group className="mb-3" controlId="exampleForm.ControlTextarea1">
+        <Form.Label>Example textarea</Form.Label>
+        <Form.Control as="textarea" 
+         value={jsonData}
+         onChange={(e)=>{setjsonData(e.target.value)}}
+         rows={10} />
+      </Form.Group>
     </div>
   )
 }
