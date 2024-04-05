@@ -1,90 +1,157 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as echarts from "echarts";
 
-
-const Chart1 = () => {
+const Chart1 = ({ jsonData }: any) => {
+  const [data, setData] = useState([]);
 
   const chartContainer = useRef<HTMLDivElement>(null);
   const myChart = useRef<echarts.ECharts | null>(null);
 
   useEffect(() => {
-    if (chartContainer.current) {
+    if (jsonData) {
+      try {
+        const rawData: any = JSON.parse(jsonData);
+        let value: any = rawData.data;
+        let numbers: any = [];
+        let stringKey: any = null;
+        Object.keys(value[0]).forEach((key) => {
+          if (typeof value[0][key] === "number") {
+            numbers.push(key);
+          }
+          if (typeof value[0][key] === "string") {
+            stringKey=key;
+          }
+        });
+    
+        const processedData = value.map((val: any) => {
+          const sub: number = val[numbers[1]] - val[numbers[0]];
+          const category: string = val[stringKey];
+          return { ...val,category,sub };
+        });
+
+        setData(processedData);
+    
+      } catch (e) {
+        console.log(e);
+      }
+    }
+  }, [jsonData]);
+
+  useEffect(() => {
+    if (chartContainer.current && data.length > 0) {
       myChart.current = echarts.init(chartContainer.current, null, {
-        renderer: 'canvas',
+        renderer: "canvas",
         useDirtyRect: false,
       });
 
+      let placeholders: any = [];
+      let catLabel: any = [];
+      let incomes: any = [];
+      let sum = 0;
+      let totalSum = 0;
+      data.forEach((element: any, index: Number) => {
+        totalSum += element.sub;
+      });
+      let modifiedData: any = data;
+
+      if (totalSum < 0) {
+        modifiedData = data.map((e: any) => {
+          e.sub /= -1;
+          return e;
+        });
+      }
+      modifiedData.sort((a: any, b: any) => {
+        if (a.sub < b.sub) {
+          return 1;
+        }
+        if (a.sub > b.sub) {
+          return -1;
+        }
+        return 0;
+      });
+
+      modifiedData.forEach((element: any, index: Number) => {
+        incomes.push(Math.abs(element.sub));
+        catLabel.push(element.category);
+        if (index === 0) {
+          placeholders.push(0);
+        } else {
+          if (element.sub > 0) {
+            placeholders.push(sum);
+          } else if (element.sub < 0) {
+            placeholders.push(sum + element.sub);
+          }
+        }
+        sum += element.sub;
+      });
+
+      incomes.push(placeholders[modifiedData.length - 1]);
+      placeholders.push(0);
+      catLabel.push("Total");
+      
       const option: echarts.EChartsOption = {
         grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '3%',
+          left: "3%",
+          right: "4%",
+          bottom: "3%",
           containLabel: true,
         },
         xAxis: {
-          type: 'category',
-          data: [
-            'Expansion',
-            'Replacement',
-            'Involuntary Turnover',
-            'Voluntary Turnover',
-            'Discrepancies',
-            'Net Change',
-          ],
+          type: "category",
+          data: catLabel,
+          axisLabel: {
+            interval: 0, 
+          },
         },
         yAxis: {
-          type: 'value',
+          type: "value",
         },
         series: [
           {
-            name: 'Placeholder',
-            type: 'bar',
-            stack: 'Total',
+            name: "Placeholder",
+            type: "bar",
+            stack: "Total",
             silent: true,
             itemStyle: {
-              borderColor: 'transparent',
-              color: 'transparent',
+              borderColor: "transparent",
+              color: "transparent",
             },
             emphasis: {
               itemStyle: {
-                borderColor: 'transparent',
-                color: 'transparent',
+                borderColor: "transparent",
+                color: "transparent",
               },
             },
-            data: [0, 379, 587, 355, 355, 0],
+            data: placeholders,
           },
           {
-            name: 'Income',
-            type: 'bar',
-            stack: 'Total',
-            color: 'rgb(155 235 180)',
+            name: "Income",
+            type: "bar",
+            stack: "Total",
+            itemStyle: {
+              borderColor: "transparent",
+              color: (params: any) => {
+                const DI = params.dataIndex;
+                const ele: any = modifiedData[DI];
+                if (ele) {
+                  if (ele.sub < 0) {
+                    return totalSum < 0 ? "green" : "red";
+                  } else {
+                    return totalSum < 0 ? "red" : "green";
+                  }
+                }
+                return totalSum < 0 ? "red" : "green";
+              },
+              
+            },
             label: {
               show: true,
-              position: 'top',
-              color: 'rgb(155 235 180)',
-              formatter: '+{c}',
+              position: "top",
+              formatter: (params: any) => {
+                return "$" + Number(params.value).toFixed(2);
+              },
             },
-            data: [
-              379,
-              326,
-              '-',
-              '-',
-              { value: 7, itemStyle: { color: 'gray' }, label: { color: 'gray' } },
-              { value: 362, itemStyle: { color: 'rgb(190 220 253)' }, label: { color: 'rgb(190 220 253)' } }, ,
-            ],
-          },
-          {
-            name: 'Expenses',
-            type: 'bar',
-            stack: 'Total',
-            color: 'rgb(244 171 170)',
-            label: {
-              show: true,
-              position: 'bottom',
-              color: 'rgb(244 171 170)',
-              formatter: '-{c}',
-            },
-            data: ['-', '-', 118, 232, '-', '-'],
+            data: incomes,
           },
         ],
       };
@@ -93,25 +160,27 @@ const Chart1 = () => {
         myChart.current.setOption(option);
       }
 
-      window.addEventListener('resize', handleResize);
+      window.addEventListener("resize", handleResize);
 
       return () => {
-        window.removeEventListener('resize', handleResize);
+        window.removeEventListener("resize", handleResize);
         if (myChart.current) {
           myChart.current.dispose();
         }
       };
     }
-  }, []);
+  }, [data]);
 
   const handleResize = () => {
     if (myChart.current) {
       myChart.current.resize();
     }
   };
-  return (<>
-    <div ref={chartContainer} style={{ width: '90%', height: '68vh' }}/>
-  </>);
-}
+  return (
+    <>
+      <div ref={chartContainer} style={{ width: "90%", height: "68vh" }} />
+    </>
+  );
+};
 
-export default Chart1
+export default Chart1;
