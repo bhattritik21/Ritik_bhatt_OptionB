@@ -3,7 +3,7 @@ import Chart1 from "./Chart1";
 import { FaPlus } from "react-icons/fa6";
 import { BsCalendarDate } from "react-icons/bs";
 import { MdArrowDropDownCircle } from "react-icons/md";
-const Main = () => {
+const Main = ({jsonData}:any) => {
 
 
 
